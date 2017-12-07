@@ -1,16 +1,21 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
+using Database;
 public class Test : MonoBehaviour {
+    public random rng;
+    public GameObject item;
+    void Start () {
+        rng = new random();
 
-	// Use this for initialization
-	void Start () {
-		
 	}
+    public Rigidbody projectile;
+    public void Generate()
+    {
+        
+        item.name = rng.Name();
+        Instantiate(item);
+      
+    }
 	
-	// Update is called once per frame
-	void Update () {
-		
-	}
 }
