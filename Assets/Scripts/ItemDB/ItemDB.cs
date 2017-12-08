@@ -1,8 +1,11 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEditor;
 using System.Data;
-namespace Database
+using Mono.Data.Sqlite;
+
+namespace Database 
 {
     [System.Serializable]
     public class random
@@ -28,8 +31,92 @@ namespace Database
             return rd.Next();
         }
     }
-    public class sqlDatabase
+    [AddComponentMenu("SqlDatabase")]
+    public class sqlDatabase : MonoBehaviour
     {
+        public enum ColumnType
+        {
+            INTEGER,
+            TEXT,
+            DATETIME
+        };
+        private string dbpath;
+        private string tableName;
+        sqlDatabase dbase;
+        public void Start(string name)
+        {
+            dbase = new sqlDatabase(name);
+
+        }
+        public sqlDatabase(string databaseName)
+        {
+            dbpath = "URI=file:C:/Unity_Projects/UnityChestDropSystem/Assets/Database/"+databaseName+".s3b";
+            Debug.Log(dbpath);
+           
+        }
+        public void CreateSchema(string tableName)
+        {
+            using (var conn = new SqliteConnection(dbpath))
+            {
+                conn.Open();
+                using (var cmd = conn.CreateCommand())
+                {
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = "CREATE TABLE IF NOT EXISTS '"+tableName+"'([Key] INTEGER NOT NULL UNIQUE PRIMARY KEY AUTOINCREMENT);";
+                    var result = cmd.ExecuteNonQuery();
+                    Debug.Log("create schema: "+result);
+                }
+            }
+            this.tableName = tableName;
+        }
+        public void AddColumn(string tableName, string ColumnName,ColumnType type ,bool isUnique=true, bool isNull=false)
+        {
+            string Unique = "";
+            if(isUnique)
+            {
+                Unique = "UNIQUE";
+            }
+            string Null = "";
+            if(isNull)
+            {
+                Null = "NULL";
+            }
+            using (var conn = new SqliteConnection(dbpath))
+            {
+                conn.Open();
+                using (var cmd = conn.CreateCommand())
+                {
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = "SELECT [" + ColumnName + "] FROM [" + tableName + "];";
+                    var result = cmd.ExecuteNonQuery();
+                    if (result != 0)
+                    {
+                        cmd.CommandText = "ALTER TABLE [" + tableName + "]" + "" + " ADD COLUMN IF NOT EXISTS '"
+                            + ColumnName + "'" + " " + Null + " " + Unique + " " + type.ToString() + ";";
+                        Debug.Log("adding column:" + result);
+                        Debug.Log("Type added:" + type.ToString());
+                    }
+                }
+            }
+        }
+       
+        public void AddItem(string itemName, int ID)
+        {
+            using (var conn = new SqliteConnection(dbpath))
+            {
+                conn.Open();
+                using (var cmd = conn.CreateCommand())
+                {
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = "INSERT INTO WeaponNames(Name,ID)" + "VALUES(@Name,@ID);";
+                    cmd.Parameters.Add(new SqliteParameter { ParameterName = "Name", Value = itemName });
+                    cmd.Parameters.Add(new SqliteParameter { ParameterName = "ID", Value = ID });
+                    var result = cmd.ExecuteNonQuery();
+                    Debug.Log("Insert result:" + result);
+                }
+            }
+        }
+
 
     }
 } 
