@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEditor;
 using System.Data;
 using Mono.Data.Sqlite;
+using System;
 
 namespace Database 
 {
@@ -42,18 +43,20 @@ namespace Database
         };
         private string dbpath;
         private string tableName;
-        sqlDatabase dbase;
-        public void Start(string name)
+        
+       //Self explanatory function names.
+        public void createDatabase(string databaseName)
         {
-            dbase = new sqlDatabase(name);
+            dbpath = "URI=file:C:/Unity_Projects/UnityChestDropSystem/Assets/Database/" + databaseName + ".s3b";
+            SqliteConnection.CreateFile("Assets/Database/" + databaseName + ".s3b");
+        }
+        public void setDatabase(string dbName)
+        {
+            dbpath = "URI=file:C:/Unity_Projects/UnityChestDropSystem/Assets/Database/" + dbName + ".s3b";
 
         }
-        public sqlDatabase(string databaseName)
-        {
-            dbpath = "URI=file:C:/Unity_Projects/UnityChestDropSystem/Assets/Database/"+databaseName+".s3b";
-            Debug.Log(dbpath);
-           
-        }
+
+        //Creates a table with a default Key column that is of type Int32, primary key, not null and autoincrementing. 
         public void CreateSchema(string tableName)
         {
             using (var conn = new SqliteConnection(dbpath))
@@ -69,54 +72,87 @@ namespace Database
             }
             this.tableName = tableName;
         }
-        public void AddColumn(string tableName, string ColumnName,ColumnType type ,bool isUnique=true, bool isNull=false)
+
+        //Add column which is only works if you add a column whose name is not taken.
+        public void AddColumn(string tableName, string ColumnName, ColumnType type, bool isUnique = true, bool isNull = false)
         {
             string Unique = "";
-            if(isUnique)
+            if (isUnique)
             {
                 Unique = "UNIQUE";
             }
             string Null = "";
-            if(isNull)
+            if (isNull)
             {
                 Null = "NULL";
             }
+            Type t;
+            switch(type)
+            {
+                case ColumnType.INTEGER:
+                {
+                        t = typeof(int);
+                        break;
+                }
+                case ColumnType.TEXT:
+                {
+                        t = typeof(string);
+                        break;
+
+                }
+                
+            }
             using (var conn = new SqliteConnection(dbpath))
             {
+              
                 conn.Open();
                 using (var cmd = conn.CreateCommand())
                 {
-                    cmd.CommandType = CommandType.Text;
-                    cmd.CommandText = "SELECT [" + ColumnName + "] FROM [" + tableName + "];";
-                    var result = cmd.ExecuteNonQuery();
-                    if (result != 0)
+                    cmd.CommandText = "ALTER TABLE [" + tableName + "]" + "" + " ADD COLUMN '"
+                         + ColumnName + "'" + " " + Null + " " + Unique + " " + type.ToString() + ";";
+                            var result = cmd.ExecuteNonQuery();
+                            Debug.Log("adding column:" + result);
+                            Debug.Log("Type added:" + type.ToString());
+                      
+                }
+                conn.Close();
+                Debug.Log("Test");
+              }
+            Debug.Log("The programme goes on...");
+            }
+           //Doesn't work.
+            public void AddItem(string itemName, int ID)
+            {
+                using (var conn = new SqliteConnection(dbpath))
+                {
+                    conn.Open();
+                    using (var cmd = conn.CreateCommand())
                     {
-                        cmd.CommandText = "ALTER TABLE [" + tableName + "]" + "" + " ADD COLUMN IF NOT EXISTS '"
-                            + ColumnName + "'" + " " + Null + " " + Unique + " " + type.ToString() + ";";
-                        Debug.Log("adding column:" + result);
-                        Debug.Log("Type added:" + type.ToString());
+                        cmd.CommandType = CommandType.Text;
+                        cmd.CommandText = "INSERT INTO WeaponNames(Name,ID)" + "VALUES(@Name,@ID);";
+                        cmd.Parameters.Add(new SqliteParameter { ParameterName = "Name", Value = itemName });
+                        cmd.Parameters.Add(new SqliteParameter { ParameterName = "ID", Value = ID });
+                        var result = cmd.ExecuteNonQuery();
+                        Debug.Log("Insert result:" + result);
                     }
                 }
             }
-        }
-       
-        public void AddItem(string itemName, int ID)
-        {
-            using (var conn = new SqliteConnection(dbpath))
+        //Doesn't work yet.
+         public void GetItem(string dbName, string tableName, string row, int ordinal, int column,Type type)
             {
-                conn.Open();
-                using (var cmd = conn.CreateCommand())
+                string path = "URI=file:C:/Unity_Projects/UnityChestDropSystem/Assets/Database/" + dbName + ".s3b";
+                using (var conn = new SqliteConnection(path))
                 {
-                    cmd.CommandType = CommandType.Text;
-                    cmd.CommandText = "INSERT INTO WeaponNames(Name,ID)" + "VALUES(@Name,@ID);";
-                    cmd.Parameters.Add(new SqliteParameter { ParameterName = "Name", Value = itemName });
-                    cmd.Parameters.Add(new SqliteParameter { ParameterName = "ID", Value = ID });
-                    var result = cmd.ExecuteNonQuery();
-                    Debug.Log("Insert result:" + result);
+                    conn.Open();
+                    using (var cmd = conn.CreateCommand())
+                    {
+                        cmd.CommandType = CommandType.Text;
+                        cmd.CommandText = "SELECT *";
+
+                    }
                 }
+
             }
         }
-
-
-    }
+    
 } 
