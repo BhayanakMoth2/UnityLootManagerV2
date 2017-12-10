@@ -15,13 +15,13 @@ public class Test : MonoBehaviour {
         //sql.createDatabase("Potions");
         sql.setDatabase("wepons");
         sql.CreateSchema("WeaponNames");
-        sql.AddColumn("WeaponNames", "Name", sqlDatabase.ColumnType.TEXT, false, false);
-  
+        //sql.AddColumn("WeaponNames", "Damage", sqlDatabase.ColumnType.INTEGER, false, false);
+        string str =sql.GetValue("wepons", "WeaponNames", "Name", 0) as string;
+        Debug.Log(str);
     }
     public void Generate()
     {
-        
-    //    sql.AddItem(rng.Name(),rng.randInt());
+       
       
     }
 	

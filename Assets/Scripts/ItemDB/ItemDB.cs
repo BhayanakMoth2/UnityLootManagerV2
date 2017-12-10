@@ -137,22 +137,33 @@ namespace Database
                     }
                 }
             }
-        //Doesn't work yet.
-         public void GetItem(string dbName, string tableName, string row, int ordinal, int column,Type type)
+        //Works like magic.
+        public object GetValue(string dbName, string tableName, string columnName, int rowNum)
+        {
+
+            object value=null;
+            
+            string path = "URI=file:C:/Unity_Projects/UnityChestDropSystem/Assets/Database/" + dbName + ".s3b";
+            using (var conn = new SqliteConnection(path))
             {
-                string path = "URI=file:C:/Unity_Projects/UnityChestDropSystem/Assets/Database/" + dbName + ".s3b";
-                using (var conn = new SqliteConnection(path))
+                conn.Open();
+                using (var cmd = conn.CreateCommand())
                 {
-                    conn.Open();
-                    using (var cmd = conn.CreateCommand())
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = "SELECT " + columnName + " FROM " + tableName + ";";
+                    var reader = cmd.ExecuteReader();
+
+                    while (reader.Read())
                     {
-                        cmd.CommandType = CommandType.Text;
-                        cmd.CommandText = "SELECT *";
-
+                       value = reader.GetValue(rowNum) as object;
                     }
+                    reader.Close();
                 }
-
+                
             }
+          
+            return value;
         }
+    }
     
 } 
