@@ -94,22 +94,7 @@ namespace Database
             {
                 Null = "NULL";
             }
-            Type t;
-            switch (type)
-            {
-                case ColumnType.INTEGER:
-                    {
-                        t = typeof(int);
-                        break;
-                    }
-                case ColumnType.TEXT:
-                    {
-                        t = typeof(string);
-                        break;
-
-                    }
-
-            }
+            
             using (var conn = new SqliteConnection(dbpath))
             {
 
@@ -118,10 +103,15 @@ namespace Database
                 {
                     cmd.CommandText = "ALTER TABLE [" + tableName + "]" + "" + " ADD COLUMN '"
                          + ColumnName + "'" + " " + Null + " " + Unique + " " + type.ToString() + ";";
-                    var result = cmd.ExecuteNonQuery();
-                    Debug.Log("adding column:" + result);
-                    Debug.Log("Type added:" + type.ToString());
-
+                    try
+                    {
+                        var result = cmd.ExecuteNonQuery();
+                    }
+                    catch
+                    {
+                        Debug.Log("Duplicate Column Name!");
+                    }
+                   
                 }
                 conn.Close();
                 Debug.Log("Test");
