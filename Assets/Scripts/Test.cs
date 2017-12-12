@@ -4,15 +4,18 @@ using UnityEngine;
 using Database;
 [AddComponentMenu("Database")]
 public class Test : MonoBehaviour {
-    sqlDatabase sql = new sqlDatabase();
-    void Start () {
-
-
-    }
-    public void Generate()
+    SQLDatabase sql = new SQLDatabase();
+    void Start()
     {
-       
-      
+        sql.SetDatabaseName("wepons");
+        var conn = sql.GetConn();
+        conn.Open();
+        var reader = sql.GetReader("WeaponNames","Name",ref conn);
+        while(reader.Read())
+        Debug.Log(reader.GetString(1));
+        
     }
+    
+   
 	
 }

@@ -32,213 +32,64 @@ namespace Database
             return rd.Next();
         }
     }
-    [AddComponentMenu("SqlDatabase")]
-    public class sqlDatabase : MonoBehaviour
+    public class SQLDatabase
     {
-        public enum ColumnType
+        string dbPath = "";
+        string activeDb = "";
+        public void SetDatabaseName(string databaseName)
         {
-            INTEGER,
-            TEXT,
-            TIME,
-            DATE,
-            FLOAT,
-            BOOLEAN,
-            REAL,
-            VARCHAR,
-            BLOB,
-            NUMERIC,
-            NVARCHAR
-        };
-        private string dbpath;
-        private string tableName;
-
-        //Self explanatory function names.
-        public void createDatabase(string databaseName)
-        {
-            dbpath = "URI=file:C:/Unity_Projects/UnityChestDropSystem/Assets/Database/" + databaseName + ".s3b";
-            SqliteConnection.CreateFile("Assets/Database/" + databaseName + ".s3b");
+            dbPath = "URI=file:" + Application.dataPath +"/Database/"+databaseName+".s3b";
+            Debug.Log("DbPath: "+dbPath);
+            activeDb = databaseName;
         }
-        public void setDatabase(string dbName)
+        public void SetDatabaseDirectory(string path, string activeDb)
         {
-            dbpath = "URI=file:C:/Unity_Projects/UnityChestDropSystem/Assets/Database/" + dbName + ".s3b";
-
+            dbPath = "URI = file:" + path + "/" + activeDb + ".s3b";
+            this.activeDb = activeDb;
         }
 
-        //Creates a table with a default Key column that is of type Int32, primary key, not null and autoincrementing. 
-        public void CreateSchema(string tableName)
+        public void ExecuteNonQuery(string CommandText)
         {
-            using (var conn = new SqliteConnection(dbpath))
+            using (var conn = new SqliteConnection(dbPath))
             {
-                conn.Open();
-                using (var cmd = conn.CreateCommand())
+                var cmd = conn.CreateCommand();
+                cmd.CommandType = CommandType.Text;
+                cmd.CommandText = CommandText;
+                try
                 {
-                    cmd.CommandType = CommandType.Text;
-                    cmd.CommandText = "CREATE TABLE IF NOT EXISTS '" + tableName + "'([Key] INTEGER NOT NULL UNIQUE PRIMARY KEY AUTOINCREMENT);";
-                    var result = cmd.ExecuteNonQuery();
-                    Debug.Log("create schema: " + result);
+                    cmd.ExecuteNonQuery();
+                }
+                catch (SqliteException sqlE)
+                {
+                    string exp = sqlE.Message;
+                    Debug.Log("SQLite Exception!:" + exp);
                 }
             }
-            this.tableName = tableName;
-        }
 
-        //Add column which is only works if you add a column whose name is not taken.
-        public void AddColumn(string tableName, string ColumnName, ColumnType type, bool isUnique = true, bool isNull = false)
+        }
+        public SqliteDataReader GetReader(string tableName,string columnName,ref SqliteConnection conn)
         {
-            string Unique = "";
-            if (isUnique)
+            
+            
+                var cmd = conn.CreateCommand();
+                cmd.CommandType = CommandType.Text;
+                cmd.CommandText = "SELECT " + " * " + " FROM " + tableName + ";";
+            try
             {
-                Unique = "UNIQUE";
+                var reader = cmd.ExecuteReader();
+                return reader;
             }
-            string Null = "";
-            if (isNull)
+            catch
             {
-                Null = "NULL";
+                return null;
             }
             
-            using (var conn = new SqliteConnection(dbpath))
-            {
-
-                conn.Open();
-                using (var cmd = conn.CreateCommand())
-                {
-                    cmd.CommandText = "ALTER TABLE [" + tableName + "]" + "" + " ADD COLUMN '"
-                         + ColumnName + "'" + " " + Null + " " + Unique + " " + type.ToString() + ";";
-                    try
-                    {
-                        var result = cmd.ExecuteNonQuery();
-                    }
-                    catch
-                    {
-                        Debug.Log("Duplicate Column Name!");
-                    }
-                   
-                }
-                conn.Close();
-                Debug.Log("Test");
-            }
-            Debug.Log("The programme goes on...");
         }
-        //Doesn't work.
-        public void AddItem(string itemName, int ID)
+        public SqliteConnection GetConn()
         {
-            using (var conn = new SqliteConnection(dbpath))
-            {
-                conn.Open();
-                using (var cmd = conn.CreateCommand())
-                {
-                    cmd.CommandType = CommandType.Text;
-                    cmd.CommandText = "INSERT INTO WeaponNames(Name,ID)" + "VALUES(@Name,@ID);";
-                    cmd.Parameters.Add(new SqliteParameter { ParameterName = "Name", Value = itemName });
-                    cmd.Parameters.Add(new SqliteParameter { ParameterName = "ID", Value = ID });
-                    var result = cmd.ExecuteNonQuery();
-                    Debug.Log("Insert result:" + result);
-                }
-            }
+            SqliteConnection conn = new SqliteConnection(dbPath);
+            return conn;
         }
-        //Works on anything that is non-nullable.
-        public string GetString(string dbName, string tableName, string columnName, int rowNum)
-        {
-
-            string value = null;
-
-            string path = "URI=file:C:/Unity_Projects/UnityChestDropSystem/Assets/Database/" + dbName + ".s3b";
-            using (var conn = new SqliteConnection(path))
-            {
-                conn.Open();
-                using (var cmd = conn.CreateCommand())
-                {
-                    cmd.CommandType = CommandType.Text;
-                    cmd.CommandText = "SELECT " + columnName + " FROM " + tableName + ";";
-                    var reader = cmd.ExecuteReader();
-
-                    while (reader.Read())
-                    {
-                        value = reader.GetString(rowNum);
-                    }
-                    reader.Close();
-                }
-
-            }
-
-            return value;
-        }
-        public int GetInt32(string dbName, string tableName, string columnName, int rowNum)
-        {
-
-            int value = 0;
-
-            string path = "URI=file:C:/Unity_Projects/UnityChestDropSystem/Assets/Database/" + dbName + ".s3b";
-            using (var conn = new SqliteConnection(path))
-            {
-                conn.Open();
-                using (var cmd = conn.CreateCommand())
-                {
-                    cmd.CommandType = CommandType.Text;
-                    cmd.CommandText = "SELECT " + columnName + " FROM " + tableName + ";";
-                    var reader = cmd.ExecuteReader();
-
-                    while (reader.Read())
-                    {
-                        value = (int)reader.GetInt32(rowNum);
-
-                    }
-                    reader.Close();
-                }
-
-            }
-
-            return value;
-        }
-        public float GetFloat(string dbName, string tableName, string columnName, int rowNum)
-        {
-            float value = 0;
-
-            string path = "URI=file:C:/Unity_Projects/UnityChestDropSystem/Assets/Database/" + dbName + ".s3b";
-            using (var conn = new SqliteConnection(path))
-            {
-                conn.Open();
-                using (var cmd = conn.CreateCommand())
-                {
-                    cmd.CommandType = CommandType.Text;
-                    cmd.CommandText = "SELECT " + columnName + " FROM " + tableName + ";";
-                    var reader = cmd.ExecuteReader();
-
-                    while (reader.Read())
-                    {
-                        value = reader.GetFloat(rowNum);
-                    }
-                    reader.Close();
-                }
-
-            }
-
-            return value;
-        }
-        public DateTime GetDateTime(string dbName, string tableName, string columnName, int rowNum)
-        {
-            DateTime value = new DateTime();
-            value = DateTime.Now;
-
-            string path = "URI=file:C:/Unity_Projects/UnityChestDropSystem/Assets/Database/" + dbName + ".s3b";
-            using (var conn = new SqliteConnection(path))
-            {
-                conn.Open();
-                using (var cmd = conn.CreateCommand())
-                {
-                    cmd.CommandType = CommandType.Text;
-                    cmd.CommandText = "SELECT " + columnName + " FROM " + tableName + ";";
-                    var reader = cmd.ExecuteReader();
-
-                    while (reader.Read())
-                    {
-                        value = reader.GetDateTime(rowNum);
-                    }
-                    reader.Close();
-                }
-
-            }
-
-            return value;
-        }
-     }   
+    }
+ 
 } 

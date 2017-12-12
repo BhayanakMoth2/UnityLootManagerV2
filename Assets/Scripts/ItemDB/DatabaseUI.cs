@@ -4,10 +4,12 @@ using System.Linq;
 using System.Text;
 using UnityEngine.UI;
 using UnityEditor;
+using Database;
 namespace Assets.Scripts.ItemDB
 {
     class DatabaseUI : Editor
     {
+
         public void onEnable()
         {
              
