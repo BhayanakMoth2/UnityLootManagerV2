@@ -32,7 +32,7 @@ namespace Database
             return rd.Next();
         }
     }
-    public class SQLDatabase
+    public class ISQLDatabase
     {
         string dbPath = "";
         string activeDb = "";
@@ -48,11 +48,8 @@ namespace Database
             this.activeDb = activeDb;
         }
 
-        public void ExecuteNonQuery(string CommandText)
+        public void ExecuteNonQuery(string CommandText,ref SqliteCommand cmd)
         {
-            using (var conn = new SqliteConnection(dbPath))
-            {
-                var cmd = conn.CreateCommand();
                 cmd.CommandType = CommandType.Text;
                 cmd.CommandText = CommandText;
                 try
@@ -66,14 +63,14 @@ namespace Database
                 }
             }
 
+       public SqliteCommand GetCommand(ref SqliteConnection conn)
+        {
+            var cmd = conn.CreateCommand();
+            return cmd;
         }
-        public SqliteDataReader GetReader(string tableName,string columnName,ref SqliteConnection conn)
+        public SqliteDataReader GetReader(ref SqliteCommand cmd,ref SqliteConnection conn)
         {
             
-            
-                var cmd = conn.CreateCommand();
-                cmd.CommandType = CommandType.Text;
-                cmd.CommandText = "SELECT " + " * " + " FROM " + tableName + ";";
             try
             {
                 var reader = cmd.ExecuteReader();

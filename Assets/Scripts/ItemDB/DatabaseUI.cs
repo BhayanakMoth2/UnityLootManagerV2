@@ -5,7 +5,7 @@ using System.Text;
 using UnityEngine.UI;
 using UnityEditor;
 using Database;
-namespace Assets.Scripts.ItemDB
+namespace SQLUI
 {
     class DatabaseUI : Editor
     {

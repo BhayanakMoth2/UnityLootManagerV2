@@ -4,18 +4,28 @@ using UnityEngine;
 using Database;
 [AddComponentMenu("Database")]
 public class Test : MonoBehaviour {
-    SQLDatabase sql = new SQLDatabase();
+    ISQLDatabase sql = new ISQLDatabase();
     void Start()
     {
+       
         sql.SetDatabaseName("wepons");
         var conn = sql.GetConn();
+        var cmd = sql.GetCommand(ref conn);       
         conn.Open();
-        var reader = sql.GetReader("WeaponNames","Name",ref conn);
-        while(reader.Read())
-        Debug.Log(reader.GetString(1));
+        sql.ExecuteNonQuery("select * from WeaponNames where key%2 = 0",ref cmd);
+        var reader = sql.GetReader(ref cmd,ref conn);
+        var schema = reader.GetSchemaTable();
+        var val1 =schema.Rows;
+        Debug.Log("Val1: " + val1);
+        string str="";
+        while (reader.Read())
+        {
+            str = reader[1].ToString();
+            Debug.Log(str);
+        }
         
     }
-    
-   
-	
+
+
+
 }
