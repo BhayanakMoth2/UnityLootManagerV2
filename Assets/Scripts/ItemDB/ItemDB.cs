@@ -48,8 +48,9 @@ namespace Database
             this.activeDb = activeDb;
         }
 
-        public void ExecuteNonQuery(string CommandText,ref SqliteCommand cmd)
+        public SqliteException ExecuteNonQuery(string CommandText,ref SqliteCommand cmd)
         {
+            SqliteException sqle = null ;
                 cmd.CommandType = CommandType.Text;
                 cmd.CommandText = CommandText;
                 try
@@ -60,10 +61,28 @@ namespace Database
                 {
                     string exp = sqlE.Message;
                     Debug.Log("SQLite Exception!:" + exp);
+                    sqle = sqlE;
                 }
+                return sqle;
             }
+        public SqliteException ExecuteNonQuery(ref SqliteCommand cmd)
+        {
+            SqliteException sqle = null;
+            try
+            {
+                cmd.ExecuteNonQuery();
+            }
+            catch (SqliteException sqlE)
+            {
+                string exp = sqlE.Message;
+                Debug.Log("SQLite Exception!:" + exp);
+                sqle = sqlE;
+            }
+            return sqle;
 
-       public SqliteCommand GetCommand(ref SqliteConnection conn)
+        }
+
+        public SqliteCommand GetCommand(ref SqliteConnection conn)
         {
             var cmd = conn.CreateCommand();
             return cmd;
@@ -85,6 +104,7 @@ namespace Database
         public SqliteConnection GetConn()
         {
             SqliteConnection conn = new SqliteConnection(dbPath);
+           
             return conn;
         }
     }
