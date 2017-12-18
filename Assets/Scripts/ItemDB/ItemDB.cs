@@ -62,7 +62,8 @@ namespace Database
                     string exp = sqlE.Message;
                     Debug.Log("SQLite Exception!:" + exp);
                     sqle = sqlE;
-                }
+                    Debug.Log("Command Executed: " + cmd.CommandText);
+            }
                 return sqle;
             }
         public SqliteException ExecuteNonQuery(ref SqliteCommand cmd)
@@ -77,6 +78,7 @@ namespace Database
                 string exp = sqlE.Message;
                 Debug.Log("SQLite Exception!:" + exp);
                 sqle = sqlE;
+                Debug.Log("Command Executed: " + cmd.CommandText);
             }
             return sqle;
 
@@ -106,6 +108,17 @@ namespace Database
             SqliteConnection conn = new SqliteConnection(dbPath);
            
             return conn;
+        }
+        public void table_info(ref SqliteCommand cmd, string tableName)
+        {
+            cmd.CommandText = "PRAGMA table_info("+tableName+");";
+            cmd.ExecuteNonQuery();
+            var reader = cmd.ExecuteReader();
+            while(reader.Read())
+            {
+                Debug.Log(reader.GetString(1));
+            }
+
         }
     }
  

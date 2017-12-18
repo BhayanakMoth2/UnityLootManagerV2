@@ -23,7 +23,8 @@ public class Test : MonoBehaviour {
             str = reader[1].ToString();
             Debug.Log(str);
         }
-        
+        reader.Close();
+        sql.table_info(ref cmd, "WeaponNames");        
     }
 
 
