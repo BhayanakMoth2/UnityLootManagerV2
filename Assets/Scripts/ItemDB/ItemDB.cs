@@ -9,7 +9,7 @@ using System;
 namespace Database
 {
     [System.Serializable]
-    public class random
+    public class Random
     {
         System.Random rd;
         public List<string> preprefix = new List<string>();
@@ -27,7 +27,7 @@ namespace Database
             string _name = this.name[rd.Next(len3 - 1)];
             return _preprefix + " " + _prefix + " " + _name;
         }
-        public int randInt()
+        public int RandInt()
         {
             return rd.Next();
         }
@@ -109,7 +109,7 @@ namespace Database
            
             return conn;
         }
-        public void table_info(ref SqliteCommand cmd, string tableName)
+        public void Table_info(ref SqliteCommand cmd, string tableName)
         {
             cmd.CommandText = "PRAGMA table_info("+tableName+");";
             cmd.ExecuteNonQuery();
