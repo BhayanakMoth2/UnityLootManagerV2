@@ -37,7 +37,7 @@ namespace Database
         }
         bool isDbOpen = false;
         bool isTableOpen = false;
-        List<string> tableNames = new List<string>();
+
         bool openDb = false;
         string tableName = " ";
         public void OnGUI()
@@ -74,24 +74,26 @@ namespace Database
                     bool openTable = true;//GUILayout.Button("Open Table", GUILayout.ExpandWidth(false), GUILayout.ExpandHeight(false));
                     if (openTable)
                     {
-                        isTableOpen = dbTable.ColumnName("WeaponNames");
-                        Debug.Log(tableName);
+                        isTableOpen = dbTable.GetInfo("WeaponNames");
+                        dbTable.NumColumns("WeaponNames");
+                        dbTable.NumRows("WeaponNames");
+                        
                     }
                     else
                     {
                         tableName = EditorGUILayout.TextField("Test", tableName);
                         Debug.Log(tableName);
-
+                       
                     }
 
 
                 }
             }
-            if(isTableOpen)
+            if (isTableOpen)
             {
 
             }
-           EditorGUILayout.EndVertical();
+            EditorGUILayout.EndVertical();
         }
     }
 
@@ -110,10 +112,9 @@ namespace Database
         SqliteCommand cmd = null;
         public List<string> tableNames = new List<string>();
         ISQLDatabase ISQL = new ISQLDatabase();
-
-        List<string> columnNames = new List<string>();
-        List<string> type = new List<string>();
-
+        SqliteDataAdapter dbAdapter = null;
+        System.Data.DataTable dbTable = null;
+        SqliteCommandBuilder cmdBuilder = null;
         public DatabaseTable()
         {
 
@@ -127,7 +128,7 @@ namespace Database
             cmd = ISQL.GetCommand(ref conn);
             cmd.CommandText = "SELECT name FROM sqlite_master;";
             var sqle = ISQL.ExecuteNonQuery(ref cmd);
-            tableNames = ListTable();
+            
             if (sqle != null)
             {
 
@@ -139,77 +140,69 @@ namespace Database
                 return true;
             }
         }
-        public List<string> ListTable()
+        public int NumColumns(string tableName)
         {
-            List<string> tableNames = new List<string>();
+            int numCols = 0;
+            cmd.CommandText = "PRAGMA table_info("+tableName+")";
+            var sqlE = ISQL.ExecuteNonQuery(ref cmd);
+            if (sqlE != null)
+                return -1;
             var reader = cmd.ExecuteReader();
-            while (reader.Read())
+            while(reader.Read())
             {
-                string name = reader.GetString(0);
-                if (!name.Contains("sqlite"))
-                {
-                    tableNames.Add(name);
-                }
+                numCols = reader.GetInt32(0);
             }
             reader.Close();
-            return tableNames;
+            Debug.Log("Number of Columns:"+numCols);
+            return (numCols+1);
         }
 
-        public bool ColumnName(string tableName)
-        {
-            cmd.CommandText = "PRAGMA table_info(" + tableName + ");";
-            cmd.ExecuteNonQuery();
-            var sqlE = ISQL.ExecuteNonQuery(ref cmd);
-            if (sqlE == null)
-            {
-                SqliteDataReader reader = null;
-                try
-                {
-                    reader = cmd.ExecuteReader();
-                }
-                catch (SqliteException sqle)
-                {
-                    Debug.Log(sqle.Message.ToString());
-                    return false;
-                }
-                reader.Read();
-                string test = reader.GetString(1);
-                while (reader.Read())
-                {
-                    columnNames.Add(reader.GetString(1));
-                }
-                reader.Close();
-                reader = cmd.ExecuteReader();
-                while (reader.Read())
-                {
-                    type.Add(reader.GetString(2));
-                }
-                foreach (string element in type)
-                {
-                    Debug.Log(element);
-                }
 
+
+
+        public int NumRows(string tableName)
+        {
+            int numRows = 0;
+            cmd.CommandText = "SELECT COUNT(*) FROM [" + tableName + "];";
+            var sqlE =ISQL.ExecuteNonQuery(ref cmd);
+            if (sqlE != null)
+                return -1;
+            var reader = cmd.ExecuteReader();
+            reader.Read();
+            numRows = reader.GetInt32(0);
+            reader.Close();
+            Debug.Log("Number of Rows:" + numRows);
+            return numRows;
+        }
+
+        public bool GetInfo(string tableName)
+        {
+            dbTable = new System.Data.DataTable(tableName);
+            cmd.CommandText = "SELECT * FROM [" + tableName + "];";
+            var sqle = ISQL.ExecuteNonQuery(ref cmd);
+            if (sqle == null)
+            {
+                dbAdapter = new SqliteDataAdapter(cmd);
+                cmdBuilder = new SqliteCommandBuilder(dbAdapter);
+                dbAdapter.AcceptChangesDuringFill = true;
+                dbAdapter.Fill(dbTable);
+                dbTable.Rows[0][1] = "murdureurs pistal";
+                dbAdapter.Update(dbTable);
                 return true;
             }
             else
             {
-                Debug.Log("Sqlite Exception: " + sqlE.Message.ToString());
                 return false;
             }
         }
-           
+
+        public bool SaveTable()
+        {
+            dbAdapter.Update(dbTable);
+            Debug.Log("Table Updated Successfully");
+            return true;
+        }
+        /************************DATAROW CLASS***************************************/
     }
 
-    /************************DATAROW CLASS***************************************/
-
-    public class DataHeader
-    {
-        public int rowID = 0;
-        public string name = "";
-        public int damage = 0;
-        public string description = "";
-        
-    }
-}    
-
-
+}

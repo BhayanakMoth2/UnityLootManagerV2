@@ -8,23 +8,9 @@ public class Test : MonoBehaviour {
     void Start()
     {
        
-        sql.SetDatabaseName("wepons");
-        var conn = sql.GetConn();
-        var cmd = sql.GetCommand(ref conn);       
-        conn.Open();
-        sql.ExecuteNonQuery("select * from WeaponNames where key%2 = 0",ref cmd);
-        var reader = sql.GetReader(ref cmd,ref conn);
-        var schema = reader.GetSchemaTable();
-        var val1 =schema.Rows;
-        Debug.Log("Val1: " + val1);
-        string str="";
-        while (reader.Read())
-        {
-            str = reader[1].ToString();
-            Debug.Log(str);
-        }
-        reader.Close();
-        sql.table_info(ref cmd, "WeaponNames");        
+       
+        Database.DataTable dbTable = new DataTable();
+
     }
 
 

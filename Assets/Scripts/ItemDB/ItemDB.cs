@@ -121,5 +121,31 @@ namespace Database
 
         }
     }
- 
+    public class DataTable
+    {
+        System.Data.DataTable dbTable = new System.Data.DataTable("Weaponnames");
+        ISQLDatabase iSql = new ISQLDatabase();
+        SqliteConnection conn = null;
+        SqliteCommand cmd = null;
+        public DataTable()
+        {
+            iSql.SetDatabaseDirectory(Application.dataPath + "/Database/","wepons");
+            conn = iSql.GetConn();
+            cmd = iSql.GetCommand(ref conn);
+            conn.Open();
+            cmd.CommandText = "SELECT * FROM WeaponNames;";
+            iSql.ExecuteNonQuery(ref cmd);
+            SqliteDataAdapter dbAdapter = new SqliteDataAdapter(cmd);
+            dbAdapter.AcceptChangesDuringFill = true;
+            dbAdapter.Fill(dbTable);
+            
+            dbTable.Rows[0][1] = "killer pistal";
+         
+            SqliteCommandBuilder dbBuilder = new SqliteCommandBuilder(dbAdapter);
+            cmd = dbBuilder.GetUpdateCommand();
+            Debug.Log("Flag :"+dbAdapter.AcceptChangesDuringUpdate);
+            dbAdapter.AcceptChangesDuringUpdate = true;
+            dbAdapter.Update(dbTable);   
+        }
+    }
 } 
