@@ -10,16 +10,17 @@ using Database;
 using Mono.Data.Sqlite;
 namespace Database
 {
-    class DatabaseUI : EditorWindow
+    class MainUI : EditorWindow
     {
 
         static string dbPath = "";
-        static DatabaseTable dbTable;
+        static DatabaseTable dbTable=null;
+        static DatabaseTableGUI dbGUI = null;
         [MenuItem("Tools/Database Editor/Editor")]
         public static void ShowWindow()
         {
-            var ui = EditorWindow.GetWindow(typeof(DatabaseUI));
-            ui.name = "Mic Check!";
+            var ui = EditorWindow.GetWindow(typeof(MainUI));
+            ui.name = "Main";
             ui.Show();
         }
         public void OnEnable()
@@ -28,16 +29,15 @@ namespace Database
             Debug.Log(dbPath);
             dbTable = new DatabaseTable();
         }
-        public DatabaseUI()
+        public MainUI()
         {
-            this.titleContent = new GUIContent("Database Editor.");
             Debug.Log(dbPath);
 
 
         }
         bool isDbOpen = false;
         bool isTableOpen = false;
-
+        bool isUIOpen = false;
         bool openDb = false;
         string tableName = " ";
         public void OnGUI()
@@ -74,30 +74,72 @@ namespace Database
                     bool openTable = true;//GUILayout.Button("Open Table", GUILayout.ExpandWidth(false), GUILayout.ExpandHeight(false));
                     if (openTable)
                     {
-                        isTableOpen = dbTable.GetInfo("WeaponNames");
-                        dbTable.NumColumns("WeaponNames");
-                        dbTable.NumRows("WeaponNames");
-                        
+                        isTableOpen = dbTable.SetTable("WeaponNames");
+                        dbGUI = new DatabaseTableGUI(ref dbTable);
+                        dbGUI.ShowWindow();
                     }
                     else
                     {
                         tableName = EditorGUILayout.TextField("Test", tableName);
                         Debug.Log(tableName);
-                       
+                            
                     }
 
 
                 }
             }
-            if (isTableOpen)
-            {
-
             }
-            EditorGUILayout.EndVertical();
+            
+
+        }
+        
+    }
+    /**********************DATABASETABLE GUI CLASS****************************/
+
+
+    public class DatabaseTableGUI : EditorWindow
+    {
+        DatabaseTable dbTable = null;
+        int numRows = 0;
+        int numCols = 0;
+    
+
+        public DatabaseTableGUI(ref DatabaseTable dbTable)
+        {
+            
+            this.dbTable = dbTable;
+            numRows = dbTable.NumRows();
+            numCols = dbTable.NumColumns();
+            this.titleContent = new GUIContent("Database Editor.");
+        }
+        public void ShowWindow()
+        {
+         var ui = EditorWindow.GetWindow(typeof(DatabaseTableGUI));
+         ui.name = "Database Editor";
+         ui.Show();
+        }
+        public void OnGUI()
+        {
+            EditorGUILayout.BeginVertical();
+            GUILayout.Label("Mic Check Mic Check.", GUILayout.ExpandHeight(false));
+
+            System.Data.DataRowCollection dbRow = dbTable.dbTable.Rows;
+        
+            for (int i = 0; i < numRows; i++)
+            {
+                var element = dbRow[i];
+               EditorGUILayout.BeginHorizontal();
+                for (int j = 0; j < numCols; j++)
+                {
+                    GUILayout.Label(new GUIContent(element[j].ToString()), GUILayout.ExpandHeight(false));
+                }
+               EditorGUILayout.EndHorizontal();
+                
+             }
+                      
+           EditorGUILayout.EndVertical();
         }
     }
-
-
 
 
 
@@ -113,8 +155,11 @@ namespace Database
         public List<string> tableNames = new List<string>();
         ISQLDatabase ISQL = new ISQLDatabase();
         SqliteDataAdapter dbAdapter = null;
-        System.Data.DataTable dbTable = null;
+        public System.Data.DataTable dbTable = null;
         SqliteCommandBuilder cmdBuilder = null;
+        string tableName = "";
+        
+
         public DatabaseTable()
         {
 
@@ -140,7 +185,7 @@ namespace Database
                 return true;
             }
         }
-        public int NumColumns(string tableName)
+        public int NumColumns()
         {
             int numCols = 0;
             cmd.CommandText = "PRAGMA table_info("+tableName+")";
@@ -160,7 +205,7 @@ namespace Database
 
 
 
-        public int NumRows(string tableName)
+        public int NumRows()
         {
             int numRows = 0;
             cmd.CommandText = "SELECT COUNT(*) FROM [" + tableName + "];";
@@ -175,8 +220,9 @@ namespace Database
             return numRows;
         }
 
-        public bool GetInfo(string tableName)
+        public bool SetTable(string tableName)
         {
+            this.tableName = tableName;
             dbTable = new System.Data.DataTable(tableName);
             cmd.CommandText = "SELECT * FROM [" + tableName + "];";
             var sqle = ISQL.ExecuteNonQuery(ref cmd);
@@ -205,4 +251,4 @@ namespace Database
         /************************DATAROW CLASS***************************************/
     }
 
-}
+
