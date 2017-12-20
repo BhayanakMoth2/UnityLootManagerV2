@@ -35,10 +35,12 @@ namespace Database
 
 
         }
+        string dbName = "";
         bool isDbOpen = false;
         bool isTableOpen = false;
         bool isUIOpen = false;
         bool openDb = false;
+        bool openTable = false;
         string tableName = " ";
         public void OnGUI()
         {
@@ -50,9 +52,9 @@ namespace Database
             if (!isDbOpen)
             {
 
-                string dbName = "wepons";//EditorGUILayout.TextField("Enter Database Name", GUILayout.ExpandWidth(false), GUILayout.ExpandHeight(false));
-                openDb = true;//GUILayout.Button("Open Database", GUILayout.ExpandHeight(false), GUILayout.ExpandWidth(false));
-
+                
+                dbName = EditorGUILayout.TextField("Enter Database Name",dbName);
+                openDb = GUILayout.Button("Open Database", GUILayout.ExpandHeight(false), GUILayout.ExpandWidth(false));
                 if (openDb)
                 {
                     if (dbName != "")
@@ -71,20 +73,20 @@ namespace Database
 
                 if (isDbOpen)
                 {
-                    bool openTable = true;//GUILayout.Button("Open Table", GUILayout.ExpandWidth(false), GUILayout.ExpandHeight(false));
+                   
                     if (openTable)
                     {
-                        isTableOpen = dbTable.SetTable("WeaponNames");
+                        isTableOpen = dbTable.SetTable(tableName);
                         dbGUI = new DatabaseTableGUI(ref dbTable);
                         dbGUI.ShowWindow();
                     }
                     else
                     {
-                        tableName = EditorGUILayout.TextField("Test", tableName);
+                        tableName = EditorGUILayout.TextField("Enter Table Name", tableName,GUILayout.ExpandWidth(true));
                         Debug.Log(tableName);
                             
                     }
-
+                    openTable = GUILayout.Button("Open Table", GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(false));
 
                 }
             }
@@ -124,16 +126,24 @@ namespace Database
             GUILayout.Label("Mic Check Mic Check.", GUILayout.ExpandHeight(false));
 
             System.Data.DataRowCollection dbRow = dbTable.dbTable.Rows;
-        
+            EditorGUILayout.BeginHorizontal();
+            for (int i = 0; i < numCols; i++)
+            {
+              GUILayout.Label(new GUIContent(dbTable.columnNames.ElementAt(i)), GUILayout.MaxWidth(200));
+              
+            }
+            EditorGUILayout.EndHorizontal();
+         
             for (int i = 0; i < numRows; i++)
             {
                 var element = dbRow[i];
-               EditorGUILayout.BeginHorizontal();
+                EditorGUILayout.BeginHorizontal();
                 for (int j = 0; j < numCols; j++)
                 {
-                    GUILayout.Label(new GUIContent(element[j].ToString()), GUILayout.ExpandHeight(false));
+                    GUILayout.Label(new GUIContent(element[j].ToString()), GUILayout.MaxWidth(200));
+              //      GUILayout.Space(30);
                 }
-               EditorGUILayout.EndHorizontal();
+                EditorGUILayout.EndHorizontal();
                 
              }
                       
@@ -153,6 +163,7 @@ namespace Database
         SqliteConnection conn = null;
         SqliteCommand cmd = null;
         public List<string> tableNames = new List<string>();
+        public List<string> columnNames = new List<string>();
         ISQLDatabase ISQL = new ISQLDatabase();
         SqliteDataAdapter dbAdapter = null;
         public System.Data.DataTable dbTable = null;
@@ -176,7 +187,6 @@ namespace Database
             
             if (sqle != null)
             {
-
                 Debug.Log("Enter a proper database name.");
                 return false;
             }
@@ -232,8 +242,21 @@ namespace Database
                 cmdBuilder = new SqliteCommandBuilder(dbAdapter);
                 dbAdapter.AcceptChangesDuringFill = true;
                 dbAdapter.Fill(dbTable);
-                dbTable.Rows[0][1] = "murdureurs pistal";
-                dbAdapter.Update(dbTable);
+                cmd.CommandText = "PRAGMA table_info(" + tableName + ");";
+                var sqlE = ISQL.ExecuteNonQuery(ref cmd);
+                if(sqlE == null)
+                {
+                  var reader = cmd.ExecuteReader();
+                  while(reader.Read())
+                  {
+                    columnNames.Add(reader.GetString(1));
+                  }
+                reader.Close();
+                }
+                else
+                {
+                  Debug.Log("Unable to get table_info.");
+                }
                 return true;
             }
             else
